@@ -8,13 +8,20 @@
 
 <div class="w-100">
     <h1 class="h1_all_posts">All posts</h1>
-
     <div class="posts-grid">
         {% for post in posts %}
         <div class="post-card">
             <h2>{{ post.title }}</h2>
             <p>{{ post.text[:180] }}{% if post.text|length > 180 %}...{% endif %}</p>
             <a href="#" class="read-more">Read more</a>
+            {% if session.get('role') == 'admin'%}
+            <form method="POST" action="{{ url_for('delete_post', post_id=post.id) }}">
+                <button class="btn btn-outline-danger mt-2" type="submit"
+                onclick="return confirm('Are you sure you want to delete post? Id: {{ post.title }}?');">
+                    Delete
+                </button>
+            </form>
+            {% endif %}
         </div>
         {% endfor %}
     </div>

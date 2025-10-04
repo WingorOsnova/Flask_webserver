@@ -31,10 +31,6 @@ body {
     margin: 24px 0 12px;
 }
 
-.h1_all_posts {
-    margin: 30px auto;
-}
-
 /* Заголовок страницы */
 h1 {
     text-align: center;
@@ -102,4 +98,70 @@ h1 {
 
 .read-more:hover {
     background-color: #0056b3;
+}
+
+/* Expanded text state */
+.post-card p.expanded {
+    display: block;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+}
+
+/* Slider (homepage) */
+.posts-slider {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.slider-viewport {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+    width: 100%;
+}
+.slider-viewport::-webkit-scrollbar { display: none; }
+
+.slider-track {
+    display: flex;
+    gap: 16px;
+}
+
+.post-slide { /* 4 cards visible */
+    flex: 0 0 calc((100% - 3*16px) / 4);
+}
+
+.slider-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 1px solid #ddd;
+    background: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    color: #333;
+}
+.slider-btn:hover { background: #f5f7fb; }
+.slider-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.slider-btn.prev { left: -8px; }
+.slider-btn.next { right: -8px; }
+
+@media (max-width: 992px) {
+    .post-slide { flex: 0 0 calc((100% - 16px) / 2); }
+}
+@media (max-width: 576px) {
+    .post-slide { flex: 0 0 100%; }
+}
+
+/* Auth pages */
+.auth-card {
+    width: 100%;
+    max-width: 460px;
+    border-radius: 12px;
 }
