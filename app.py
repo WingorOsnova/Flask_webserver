@@ -32,7 +32,7 @@ class Post(db.Model):
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.Text, nullable=False)
     role = db.Column(db.String(20), default='user')
 
     def set_password(self, password):
@@ -164,6 +164,16 @@ with app.app_context():
         print("✅ Tables created successfully (startup init)")
     else:
         print("ℹ️ Tables already exist (startup check)")
+
+    admin_user = User.query.filter_by(username='admin').first()
+    if not admin_user:
+        admin_user = User(username='admin', role='admin')
+        admin_user.set_password('admin123')
+        db.session.add(admin_user)
+        db.session.commit()
+        print("✅ Admin user created: login='admin', password='admin123'")
+    else:
+        print("ℹ️ Admin user already exists.")
 
 if __name__ == '__main__':
     app.run(debug=False)
