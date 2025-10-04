@@ -2,25 +2,23 @@ from flask import Flask, render_template, request, redirect, session, url_for, a
 from flask_sqlalchemy import SQLAlchemy
 
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 import os
 
 
+def get_database_uri() -> str:
+    uri = os.environ.get('DATABASE_URL') or 'sqlite:///instance/app.db'
+    # Render/Heroku style URLs may use postgres:// — normalize for SQLAlchemy
+    if uri.startswith('postgres://'):
+        uri = uri.replace('postgres://', 'postgresql://', 1)
+    return uri
+
+
 app = Flask(__name__)
-# Используем PostgreSQL, если есть переменная окружения (например, на Render)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-    'DATABASE_URL',
-    'sqlite:///app.db'  # fallback для локального запуска
-)
+app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
 db = SQLAlchemy(app)
-with app.app_context():
-    from sqlalchemy import inspect
-    inspector = inspect(db.engine)
-    if not inspector.has_table("post"):
-        db.create_all()
-        print("✅ Tables created successfully!")
-    else:
-        print("ℹ️ Tables already exist.")
 
 
 class Post(db.Model):
@@ -42,6 +40,33 @@ class User(db.Model):
         return check_password_hash(self.password_hash, password)
 
 
+def ensure_default_admin():
+    admin_username = os.environ.get('DEFAULT_ADMIN_USERNAME', 'admin')
+    admin_password = os.environ.get('DEFAULT_ADMIN_PASSWORD', 'admin123')
+    u = User.query.filter_by(username=admin_username).first()
+    if not u:
+        u = User(username=admin_username, role='admin')
+        u.set_password(admin_password)
+        db.session.add(u)
+        db.session.commit()
+        print("✅ Default admin created: username='admin'")
+    else:
+        # Optionally ensure role is admin (idempotent)
+        if u.role != 'admin':
+            u.role = 'admin'
+            db.session.commit()
+            print("ℹ️ Existing 'admin' promoted to admin role")
+
+
+def login_required(view):
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get('user_id'):
+            return redirect(url_for('login', next=request.path))
+        return view(*args, **kwargs)
+    return wrapped
+
+
 @app.route('/index')
 @app.route('/')
 def index():
@@ -50,6 +75,7 @@ def index():
 
 
 @app.route('/create', methods=['POST', 'GET'])
+@login_required
 def create():
     if request.method == 'POST':
         title = request.form['title']
@@ -120,9 +146,6 @@ def register():
         return render_template('register.html')
 
 
-app.secret_key = "secret_key_for_session"
-
-
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     if request.method == 'POST':
@@ -133,7 +156,10 @@ def login():
         if user and user.check_password(password):
             session['user_id'] = user.id
             session['role'] = user.role
-            return redirect('/')
+            next_url = request.form.get('next') or request.args.get('next')
+            if next_url and next_url.startswith('/'):
+                return redirect(next_url)
+            return redirect(url_for('index'))
         else:
             return "Invalid username or password."
     return render_template('login.html')
@@ -154,26 +180,11 @@ def init_db():
         return f"❌ Error creating tables: {e}"
 
 
-# ✅ Автоинициализация БД при запуске на Render
 with app.app_context():
-    from sqlalchemy import inspect
-    inspector = inspect(db.engine)
-    existing_tables = inspector.get_table_names()
-    if "post" not in existing_tables or "user" not in existing_tables:
-        db.create_all()
-        print("✅ Tables created successfully (startup init)")
-    else:
-        print("ℹ️ Tables already exist (startup check)")
+    # Create tables and ensure default admin — idempotent
+    db.create_all()
+    ensure_default_admin()
 
-    admin_user = User.query.filter_by(username='admin').first()
-    if not admin_user:
-        admin_user = User(username='admin', role='admin')
-        admin_user.set_password('admin123')
-        db.session.add(admin_user)
-        db.session.commit()
-        print("✅ Admin user created: login='admin', password='admin123'")
-    else:
-        print("ℹ️ Admin user already exists.")
 
 if __name__ == '__main__':
     app.run(debug=False)

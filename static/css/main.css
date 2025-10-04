@@ -156,7 +156,12 @@ h1 {
     .post-slide { flex: 0 0 calc((100% - 16px) / 2); }
 }
 @media (max-width: 576px) {
+    body { margin: 16px auto; padding: 0 12px; }
+    .k_icon, .github_icon { width: 36px; }
     .post-slide { flex: 0 0 100%; }
+    .post-card { padding: 12px; }
+    .slider-btn.prev { left: 4px; }
+    .slider-btn.next { right: 4px; }
 }
 
 /* Auth pages */
