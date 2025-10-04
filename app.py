@@ -154,5 +154,18 @@ def init_db():
         return f"❌ Error creating tables: {e}"
 
 
+@app.before_first_request
+def initialize_database():
+    with app.app_context():
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        if "post" not in tables or "user" not in tables:
+            db.create_all()
+            print("✅ Tables created before first request")
+        else:
+            print("ℹ️ Tables already exist")
+
+
 if __name__ == '__main__':
     app.run(debug=False)
