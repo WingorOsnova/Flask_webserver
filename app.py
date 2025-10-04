@@ -14,13 +14,13 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 with app.app_context():
-    try:
-        # Создаём таблицы только если их нет (для PostgreSQL и SQLite)
+    from sqlalchemy import inspect
+    inspector = inspect(db.engine)
+    if not inspector.has_table("post"):
         db.create_all()
-        db.session.commit()
-        print("✅ Tables created or already exist.")
-    except Exception as e:
-        print(f"⚠️ Error creating tables: {e}")
+        print("✅ Tables created successfully!")
+    else:
+        print("ℹ️ Tables already exist.")
 
 
 class Post(db.Model):
