@@ -7,10 +7,39 @@ import os
 
 
 def get_database_uri() -> str:
-    uri = os.environ.get('DATABASE_URL') or 'sqlite:///instance/app.db'
-    # Render/Heroku style URLs may use postgres:// — normalize for SQLAlchemy
+    """Resolve DATABASE_URL and ensure SQLite paths are usable.
+
+    - Normalizes postgres:// to postgresql://
+    - For sqlite:/// relative paths, converts to absolute path based on this file
+    - Ensures the parent directory exists for SQLite file URLs
+    """
+    uri = os.environ.get('DATABASE_URL')
+
+    # Base directory of this file (project root)
+    basedir = os.path.abspath(os.path.dirname(__file__))
+
+    if not uri:
+        # Default to an absolute path inside ./instance
+        db_path = os.path.join(basedir, 'instance', 'app.db')
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        return 'sqlite:///' + db_path
+
+    # Normalize old-style postgres URLs
     if uri.startswith('postgres://'):
         uri = uri.replace('postgres://', 'postgresql://', 1)
+
+    # If using SQLite, make sure directory exists and use absolute path when relative
+    if uri.startswith('sqlite:///') and not uri.startswith('sqlite:////'):
+        rel_path = uri[len('sqlite:///'):]
+        abs_path = os.path.join(basedir, rel_path)
+        os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+        uri = 'sqlite:///' + abs_path
+    elif uri.startswith('sqlite:////'):
+        abs_path = uri[len('sqlite:////'):]
+        # Only ensure dir if this is a file path, not :memory:
+        if abs_path and abs_path != ':memory:':
+            os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+
     return uri
 
 
@@ -115,6 +144,7 @@ def posts():
 
 
 @app.route('/posts/<int:post_id>/delete', methods=['POST'])
+@login_required
 def delete_post(post_id):
     if session.get('role') != 'admin':
         abort(403)
@@ -168,14 +198,14 @@ def login():
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect('/')
+    return redirect(url_for('index'))
 
 
 @app.route('/init-db')
 def init_db():
     try:
         db.create_all()
-        return "✅ Tables successfully created in PostgreSQL!"
+        return "✅ Tables successfully created!"
     except Exception as e:
         return f"❌ Error creating tables: {e}"
 
