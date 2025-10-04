@@ -3,5 +3,44 @@
 
 {% block home_link %}link-secondary{% endblock %}
 {% block content %}
-    <h1>Home page</h1>
+  <div class="w-100">
+    <section class="text-center my-4">
+      <h1 class="mb-2">Welcome</h1>
+      <p class="text-muted mb-3">Fresh posts and notes.</p>
+      <div class="d-flex gap-2 justify-content-center">
+        <a href="{{ url_for('posts') }}" class="btn btn-primary">All posts</a>
+        {% if session.get('user_id') %}
+          <a href="{{ url_for('create') }}" class="btn btn-outline-primary">Create post</a>
+        {% endif %}
+      </div>
+    </section>
+
+    {% if posts %}
+    <section>
+      <h2 class="h5 text-center mb-3">Latest posts</h2>
+      <div class="posts-slider">
+        <button class="slider-btn prev" type="button" aria-label="Previous">&#10094;</button>
+        <div class="slider-viewport">
+          <div class="slider-track">
+            {% for post in posts %}
+              <div class="post-slide">
+                <div class="post-card">
+                  <h2>{{ post.title }}</h2>
+                  <p>{{ post.text }}</p>
+                  <a href="#" class="read-more" data-toggle-text="Show less">Read more</a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <button class="slider-btn next" type="button" aria-label="Next">&#10095;</button>
+      </div>
+      <div class="text-center mt-3">
+        <a href="{{ url_for('posts') }}" class="btn btn-link">View all posts →</a>
+      </div>
+    </section>
+    {% else %}
+      <p class="text-center text-muted">No posts yet. Be the first to create one!</p>
+    {% endif %}
+  </div>
 {% endblock %}

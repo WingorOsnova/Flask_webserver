@@ -11,23 +11,29 @@
     <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom"> 
         <div class="col-md-3 mb-2 mb-md-0 ms-5"> 
                 <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none"> 
-                    <img src="{{ url_for('static', filename='img/k_icon.jpeg')}}" class='k_icon' alt="">
+                    <img src="{{ url_for('static', filename='img/k_icon.jpeg')}}" class='k_icon'>
                 </a> 
             </div> 
             <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0"> 
             <li><a href="{{ url_for('index') }}" class="nav-link px-2 {% block home_link%}{% endblock %}">Home</a></li> 
             <li><a href="{{ url_for('posts') }}" class="nav-link px-2 {% block all_posts_link %}{% endblock %}">All posts</a></li> 
+            {% if session.get('user_id') %}
             <li><a href="{{ url_for('create') }}" class="nav-link px-2 {% block create_link %}{% endblock %}">Create post</a></li> 
+            {% endif %}
             </ul> <div class="col-md-3 text-end"> 
-            <button type="button" class="btn btn-outline-primary me-2">Login</button> 
-            <button type="button" class="btn btn-primary me-5">Sign-up</button> 
+            {% if session.get('user_id') %}
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger me-2">Logout</a> 
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-outline-primary me-2">Login</a> 
+                <a href="{{ url_for('register') }}" class="btn btn-primary me-5">Sign-up</a> 
+            {% endif %}
         </div> 
     </header>
     <main class="flex-fill d-flex">
         {% block content %}
         {% endblock %}
     </main>
-    <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 mt-auto mb-1 my-4 border-top"> 
+    <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 mt-5 mb-1 my-4 border-top"> 
         <div class="col-md-4 d-flex align-items-center"> 
             <a href="/" class="mb-3 me-2 mb-md-0 ms-5 text-body-secondary text-decoration-none lh-1" aria-label="Bootstrap"> 
                 <img src="{{ url_for('static', filename='img/k_icon.jpeg')}}" class='k_icon' alt="">
@@ -51,5 +57,48 @@
             </li> 
         </ul> 
     </footer>
+    <script>
+      // Read more / Show less toggle for any .post-card
+      document.addEventListener('click', function(e) {
+        const link = e.target.closest('.read-more');
+        if (!link) return;
+        e.preventDefault();
+        const card = link.closest('.post-card');
+        const p = card && card.querySelector('p');
+        if (!p) return;
+        const alt = link.getAttribute('data-toggle-text') || 'Show less';
+        if (p.classList.toggle('expanded')) {
+          link.setAttribute('data-toggle-text', link.textContent.trim());
+          link.textContent = alt;
+        } else {
+          const prev = link.getAttribute('data-toggle-text') || 'Read more';
+          link.setAttribute('data-toggle-text', link.textContent.trim());
+          link.textContent = prev;
+        }
+      });
+
+      // Simple horizontal slider for homepage .posts-slider
+      function initSlider(root) {
+        const viewport = root.querySelector('.slider-viewport');
+        const prev = root.querySelector('.slider-btn.prev');
+        const next = root.querySelector('.slider-btn.next');
+        if (!viewport || !prev || !next) return;
+        const update = () => {
+          const max = viewport.scrollWidth - viewport.clientWidth;
+          prev.disabled = viewport.scrollLeft <= 0;
+          next.disabled = viewport.scrollLeft >= max - 1;
+        };
+        prev.addEventListener('click', () => {
+          viewport.scrollBy({ left: -viewport.clientWidth, behavior: 'smooth' });
+        });
+        next.addEventListener('click', () => {
+          viewport.scrollBy({ left: viewport.clientWidth, behavior: 'smooth' });
+        });
+        viewport.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', update);
+        update();
+      }
+      document.querySelectorAll('.posts-slider').forEach(initSlider);
+    </script>
 </body>
 </html>
