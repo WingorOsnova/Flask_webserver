@@ -9,6 +9,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+with app.app_context():
+    db.create_all()
+
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
