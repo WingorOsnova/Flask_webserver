@@ -145,5 +145,14 @@ def logout():
     return redirect('/')
 
 
+@app.route('/init-db')
+def init_db():
+    try:
+        db.create_all()
+        return "✅ Tables successfully created in PostgreSQL!"
+    except Exception as e:
+        return f"❌ Error creating tables: {e}"
+
+
 if __name__ == '__main__':
     app.run(debug=False)
