@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title%}Create post{% endblock %}
+
+{% block create_link %}link-secondary{% endblock %}
+
+{% block content %}
+<div class="position-absolute top-20 start-50 translate-middle-x">
+  <h1>Creates new post</h1>
+</div>
+<div class="position-absolute top-50 start-50 translate-middle p-5 border border-primary rounded-3">
+  <form method="POST" class="w-150 mx-auto">
+    <legend>Create new post</legend>
+    <div class="mb-3">
+      <label for="disabledTextInput" class="form-label">Title</label>
+      <input type="title" name="title" id="disabledTextInput" class="form-control w-255" placeholder="Enter title for your post:">
+    </div>
+    <div class="mb-3">
+      <label for="exampleFormControlTextarea1" class="form-label ">Text</label>
+      <textarea class="form-control" name="text" id="exampleFormControlTextarea1" placeholder="Enter text for your post" rows="3"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Create</button>
+</form>
+</div>
+{% endblock %}
